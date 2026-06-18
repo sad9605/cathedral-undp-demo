@@ -1376,57 +1376,88 @@
 
     // ---------- SYNC PENDING REPORTS (Supabase) ----------
     async function syncPendingReports() {
-      if (!state.supabaseReady || !navigator.onLine) return;
-      const pending = await db.pending.toArray();
-      if (!pending.length) {
-        document.getElementById('sync-status').textContent = '✅ All synced';
-        updatePendingIndicator();
-        return;
-      }
-      document.getElementById('sync-status').textContent = `⏳ Syncing ${pending.length}...`;
-      let failed = false;
-      for (const entry of pending) {
-        const r = entry.report;
-        let photoBase64 = null;
-        if (r.photo instanceof Blob) {
-          photoBase64 = await new Promise(resolve => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.readAsDataURL(r.photo);
-          });
-        }
-        const { error } = await state.supabase.from('reports').insert({
-          damage_level: r.damage,
-          description: r.desc,
-          photo: photoBase64,
-          lat: r.lat,
-          lng: r.lng,
-          ai_assisted: r.aiAssisted,
-          need_help: r.needHelp,
-          spotter_id: r.spotterId,
-          infrastructure_types: r.infrastructureTypes,
-          infrastructure_name: r.infrastructureName,
-          crisis_types: r.crisisTypes,
-          debris: r.debris,
-          electricity_condition: r.electricityCondition,
-          health_functioning: r.healthFunctioning,
-          most_pressing_needs: r.mostPressingNeeds
-        });
-        if (!error) {
-          await db.pending.delete(entry.id);
-        } else {
-          failed = true;
-          const rc = (entry.retryCount || 0) + 1;
-          if (rc < 5) await db.pending.update(entry.id, { retryCount: rc });
-        }
-      }
-      const remaining = await db.pending.count();
-      document.getElementById('sync-status').textContent = remaining ? `⚠️ ${remaining} pending` : '✅ All synced';
-      document.getElementById('last-sync').textContent = `Last sync: ${new Date().toLocaleTimeString()}`;
-      updatePendingIndicator();
-      if (failed) setTimeout(syncPendingReports, 5000);
+  if (!navigator.onLine) {
+    document.getElementById('sync-status').textContent = '📡 Offline – waiting for connection';
+    return;
+  }
+  
+  const pending = await db.pending.toArray();
+  if (!pending.length) {
+    document.getElementById('sync-status').textContent = '✅ All synced';
+    updatePendingIndicator();
+    return;
+  }
+
+  document.getElementById('sync-status').textContent = `⏳ Syncing ${pending.length}...`;
+  let failed = false;
+
+  const url = 'https://prwfzkbrtxvoyamgdcem.supabase.co/rest/v1/reports';
+  const apiKey = 'sb_publishable_RXSq-kezZRkFz8TVoJl3lw_nbEarg46';
+
+  for (const entry of pending) {
+    const r = entry.report;
+    
+    // Convert photo Blob to base64 if needed
+    let photoBase64 = null;
+    if (r.photo instanceof Blob) {
+      photoBase64 = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.readAsDataURL(r.photo);
+      });
     }
 
+    const payload = {
+      damage_level: r.damage,
+      description: r.desc || '',
+      photo: photoBase64, // Supabase expects base64 string
+      lat: r.lat,
+      lng: r.lng,
+      ai_assisted: r.aiAssisted || false,
+      need_help: r.needHelp || false,
+      spotter_id: r.spotterId,
+      infrastructure_types: r.infrastructureTypes || [],
+      infrastructure_name: r.infrastructureName || '',
+      crisis_types: r.crisisTypes || [],
+      debris: r.debris || '',
+      electricity_condition: r.electricityCondition || '',
+      health_functioning: r.healthFunctioning || '',
+      most_pressing_needs: r.mostPressingNeeds || []
+    };
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'apikey': apiKey,
+          'Authorization': 'Bearer ' + apiKey,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=representation'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        await db.pending.delete(entry.id);
+      } else {
+        const errorText = await response.text();
+        console.error('Sync error for entry', entry.id, response.status, errorText);
+        failed = true;
+        const rc = (entry.retryCount || 0) + 1;
+        if (rc < 5) await db.pending.update(entry.id, { retryCount: rc });
+      }
+    } catch (e) {
+      console.error('Sync exception:', e);
+      failed = true;
+    }
+  }
+
+  const remaining = await db.pending.count();
+  document.getElementById('sync-status').textContent = remaining ? `⚠️ ${remaining} pending` : '✅ All synced';
+  document.getElementById('last-sync').textContent = `Last sync: ${new Date().toLocaleTimeString()}`;
+  updatePendingIndicator();
+  if (failed) setTimeout(syncPendingReports, 5000);
+}
     async function updatePendingIndicator() {
       const count = await db.pending.count();
       const el = document.getElementById('pendingQueueIndicator');
