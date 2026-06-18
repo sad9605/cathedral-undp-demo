@@ -21,7 +21,6 @@ This is the Cathedral Network submission for the UNDP Crisis Mapping Challenge. 
 
 https://sad9605.github.io/cathedral-undp-demo/
 
-(Replace this link with your actual GitHub Pages URL once you enable it.)
 
 Submission Details
 
