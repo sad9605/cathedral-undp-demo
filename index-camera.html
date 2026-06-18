@@ -307,6 +307,29 @@
       .dark-mode-toggle { bottom: 0.5rem; right: 0.5rem; width: 40px; height: 40px; }
     }
     body[dir="rtl"] .step-badge { margin-right: 0; margin-left: 0.5rem; }
+    /* Camera Modal */
+    #cameraModal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.9);
+      z-index: 9999;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    #cameraModal video {
+      max-width: 100%;
+      max-height: 70vh;
+      background: #000;
+    }
+    #cameraModal .btn {
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+    }
   </style>
 </head>
 <body>
@@ -385,74 +408,38 @@
     <!-- DAMAGE REPORT FORM -->
     <h2 id="submit-heading">Submit a Damage Report</h2>
     <div style="background: white; border-radius: var(--card-radius); padding: 1.2rem; box-shadow: var(--shadow-sm); margin-bottom: 1rem;">
-      <p><span class="step-badge">1</span> <label id="photo-label"></label> <br>
-    <!-- Photo Input with Fallback -->
-    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
-    // ---------- DIRECT CAMERA CAPTURE (getUserMedia) ----------
-let cameraStream = null;
-const cameraModal = document.getElementById('cameraModal');
-const cameraFeed = document.getElementById('cameraFeed');
-const captureBtn = document.getElementById('capturePhoto');
-const closeCamera = document.getElementById('closeCamera');
-const cameraBtn = document.getElementById('cameraBtn');
+      <p><span class="step-badge">1</span> <label id="photo-label"></label><br>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+          <input type="file" id="photo" accept="image/*" aria-describedby="photo-help" style="flex:1; min-width:120px;">
+          <button type="button" id="cameraBtn" class="btn" style="padding: 0.5rem 1rem;">📸 Camera</button>
+          <span id="photoStatus" style="font-size:0.8rem; color:#888;">No photo selected</span>
+        </div>
+      </p>
 
-// Open camera
-cameraBtn.addEventListener('click', async function() {
-  try {
-    cameraStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
-    });
-    cameraFeed.srcObject = cameraStream;
-    cameraModal.style.display = 'flex';
-  } catch (err) {
-    alert('Camera access denied. Please use the file picker instead.');
-    console.error(err);
-  }
-});
+      <!-- Camera Modal -->
+      <div id="cameraModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:9999; flex-direction:column; align-items:center; justify-content:center;">
+        <video id="cameraFeed" autoplay playsinline style="max-width:100%; max-height:70vh; background:#000;"></video>
+        <div style="margin-top:1rem; display:flex; gap:1rem;">
+          <button id="capturePhoto" class="btn" style="background:#27ae60;">📸 Capture</button>
+          <button id="closeCamera" class="btn" style="background:#c0392b;">✖ Cancel</button>
+        </div>
+      </div>
 
-// Capture photo
-captureBtn.addEventListener('click', function() {
-  const canvas = document.createElement('canvas');
-  const video = cameraFeed;
-  canvas.width = video.videoWidth || 1280;
-  canvas.height = video.videoHeight || 720;
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  
-  canvas.toBlob(function(blob) {
-    const file = new File([blob], 'camera-photo.jpg', { type: 'image/jpeg' });
-    const dt = new DataTransfer();
-    dt.items.add(file);
-    document.getElementById('photo').files = dt.files;
-    document.getElementById('photo').dispatchEvent(new Event('change'));
-    document.getElementById('photoStatus').textContent = '📸 ' + file.name;
-    document.getElementById('photoStatus').style.color = '#27ae60';
-    closeCameraModal();
-  }, 'image/jpeg', 0.9);
-});
+      <div class="ai-toggle"><a href="#" id="ai-toggle-link" style="color: #5e2d8e; text-decoration: none;">📡 Analyze with AI (requires ~100 MB download, Wi-Fi recommended) ▸</a></div>
+      <div class="ai-panel" id="ai-panel">
+        <strong id="ai-title"></strong><br>
+        <button id="analyze-btn" disabled>🔍 Analyze with AI</button>
+        <button id="retry-ai-btn" style="margin-left:0.5rem; display:none;">🔄 Retry AI</button>
+        <span id="ai-status" aria-live="polite"></span>
+        <div id="ai-spinner" style="display: none;"><div class="spinner"></div> Analyzing...</div>
+        <div id="ai-result" style="display:none; margin-top:0.8rem;">
+          <strong id="predictions-label"></strong> <span id="ai-predictions"></span><br>
+          <strong id="suggestion-label"></strong> <span id="ai-suggestion"></span>
+          <button id="accept-ai" style="margin-top:0.5rem;">✓ Accept Suggestion</button>
+          <button id="suggest-infra-ai" style="margin-top:0.5rem; margin-left:0.5rem;">🏗️ Suggest infrastructure from photo</button>
+        </div>
+      </div>
 
-// Close camera
-function closeCameraModal() {
-  if (cameraStream) {
-    cameraStream.getTracks().forEach(track => track.stop());
-    cameraStream = null;
-  }
-  cameraFeed.srcObject = null;
-  cameraModal.style.display = 'none';
-}
-
-closeCamera.addEventListener('click', closeCameraModal);
-
-// Track file input change (for file picker)
-document.getElementById('photo').addEventListener('change', function(e) {
-  if (this.files && this.files.length > 0) {
-    document.getElementById('photoStatus').textContent = '📸 ' + this.files[0].name;
-    document.getElementById('photoStatus').style.color = '#27ae60';
-  } else {
-    document.getElementById('photoStatus').textContent = 'No photo selected';
-    document.getElementById('photoStatus').style.color = '#888';
-  }
-});
       <p><span class="step-badge">2</span> <label id="damage-label"></label><br>
         <select id="damage-level" aria-label="Damage level">
           <option value="minimal">Minimal</option>
@@ -601,7 +588,7 @@ document.getElementById('photo').addEventListener('change', function(e) {
       <div class="modal-header"><h3 id="satelliteModalTitle">🛰️ Satellite Comparison</h3><button class="close-modal" aria-label="Close">&times;</button></div>
       <div class="split-view">
         <div><strong>📸 Your Photo</strong><img id="modalPhoto" alt="User photo"><p id="modalPhotoMissing" style="font-size:0.7rem; display:none;">No photo submitted.</p></div>
-        <div><strong>🛰️ Satellite Imagery (Esri)</strong><div id="satelliteMap" class="satellite-map"></div><button id="refreshSatellite" class="sat-btn">🔄 Refresh layer</button><p style="font-size:0.7rem">High‑resolution imagery provided by Esri.</p></div>
+        <div><strong>🛰️ Satellite Imagery (Esri)</strong><div id="satelliteMap" class="satellite-map"></div><button id="refreshSatellite" class="sat-btn">🔄 Refresh layer</button><p style="font-size:0.7rem">High-resolution imagery provided by Esri.</p></div>
       </div>
       <div class="modal-footer"><span id="satelliteCoords"></span></div>
     </div>
@@ -1334,7 +1321,7 @@ document.getElementById('photo').addEventListener('change', function(e) {
 
     // ---------- GLOBAL STATE ----------
     const state = {
-      location: null,      // { lat, lng } or null
+      location: null,
       marker: null,
       filter: 'all',
       reports: [],
@@ -1427,90 +1414,90 @@ document.getElementById('photo').addEventListener('change', function(e) {
       if (navigator.onLine) syncPendingReports();
     }
 
-    // ---------- SYNC PENDING REPORTS (Supabase) ----------
+    // ---------- SYNC PENDING REPORTS (Supabase with fetch) ----------
     async function syncPendingReports() {
-  if (!navigator.onLine) {
-    document.getElementById('sync-status').textContent = '📡 Offline – waiting for connection';
-    return;
-  }
-  
-  const pending = await db.pending.toArray();
-  if (!pending.length) {
-    document.getElementById('sync-status').textContent = '✅ All synced';
-    updatePendingIndicator();
-    return;
-  }
-
-  document.getElementById('sync-status').textContent = `⏳ Syncing ${pending.length}...`;
-  let failed = false;
-
-  const url = 'https://prwfzkbrtxvoyamgdcem.supabase.co/rest/v1/reports_new';
-  const apiKey = 'sb_publishable_RXSq-kezZRkFz8TVoJl3lw_nbEarg46';
-
-  for (const entry of pending) {
-    const r = entry.report;
-    
-    // Convert photo Blob to base64 if needed
-    let photoBase64 = null;
-    if (r.photo instanceof Blob) {
-      photoBase64 = await new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.readAsDataURL(r.photo);
-      });
-    }
-
-    const payload = {
-      damage_level: r.damage,
-      description: r.desc || '',
-      photo: photoBase64, // Supabase expects base64 string
-      lat: r.lat,
-      lng: r.lng,
-      ai_assisted: r.aiAssisted || false,
-      need_help: r.needHelp || false,
-      spotter_id: r.spotterId,
-      infrastructure_types: r.infrastructureTypes || [],
-      infrastructure_name: r.infrastructureName || '',
-      crisis_types: r.crisisTypes || [],
-      debris: r.debris || '',
-      electricity_condition: r.electricityCondition || '',
-      health_functioning: r.healthFunctioning || '',
-      most_pressing_needs: r.mostPressingNeeds || []
-    };
-
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'apikey': apiKey,
-          'Authorization': 'Bearer ' + apiKey,
-          'Content-Type': 'application/json',
-          'Prefer': 'return=representation'
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if (response.ok) {
-        await db.pending.delete(entry.id);
-      } else {
-        const errorText = await response.text();
-        console.error('Sync error for entry', entry.id, response.status, errorText);
-        failed = true;
-        const rc = (entry.retryCount || 0) + 1;
-        if (rc < 5) await db.pending.update(entry.id, { retryCount: rc });
+      if (!navigator.onLine) {
+        document.getElementById('sync-status').textContent = '📡 Offline – waiting for connection';
+        return;
       }
-    } catch (e) {
-      console.error('Sync exception:', e);
-      failed = true;
-    }
-  }
+      
+      const pending = await db.pending.toArray();
+      if (!pending.length) {
+        document.getElementById('sync-status').textContent = '✅ All synced';
+        updatePendingIndicator();
+        return;
+      }
 
-  const remaining = await db.pending.count();
-  document.getElementById('sync-status').textContent = remaining ? `⚠️ ${remaining} pending` : '✅ All synced';
-  document.getElementById('last-sync').textContent = `Last sync: ${new Date().toLocaleTimeString()}`;
-  updatePendingIndicator();
-  if (failed) setTimeout(syncPendingReports, 5000);
-}
+      document.getElementById('sync-status').textContent = `⏳ Syncing ${pending.length}...`;
+      let failed = false;
+
+      const url = 'https://prwfzkbrtxvoyamgdcem.supabase.co/rest/v1/reports';
+      const apiKey = 'sb_publishable_RXSq-kezZRkFz8TVoJl3lw_nbEarg46';
+
+      for (const entry of pending) {
+        const r = entry.report;
+        
+        let photoBase64 = null;
+        if (r.photo instanceof Blob) {
+          photoBase64 = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.readAsDataURL(r.photo);
+          });
+        }
+
+        const payload = {
+          damage_level: r.damage,
+          description: r.desc || '',
+          photo: photoBase64,
+          lat: r.lat,
+          lng: r.lng,
+          ai_assisted: r.aiAssisted || false,
+          need_help: r.needHelp || false,
+          spotter_id: r.spotterId,
+          infrastructure_types: r.infrastructureTypes || [],
+          infrastructure_name: r.infrastructureName || '',
+          crisis_types: r.crisisTypes || [],
+          debris: r.debris || '',
+          electricity_condition: r.electricityCondition || '',
+          health_functioning: r.healthFunctioning || '',
+          most_pressing_needs: r.mostPressingNeeds || []
+        };
+
+        try {
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'apikey': apiKey,
+              'Authorization': 'Bearer ' + apiKey,
+              'Content-Type': 'application/json',
+              'Prefer': 'return=representation'
+            },
+            body: JSON.stringify(payload)
+          });
+
+          if (response.ok) {
+            await db.pending.delete(entry.id);
+          } else {
+            const errorText = await response.text();
+            console.error('Sync error:', response.status, errorText);
+            failed = true;
+            const rc = (entry.retryCount || 0) + 1;
+            if (rc < 5) await db.pending.update(entry.id, { retryCount: rc });
+          }
+        } catch (e) {
+          console.error('Sync exception:', e);
+          failed = true;
+        }
+      }
+
+      const remaining = await db.pending.count();
+      document.getElementById('sync-status').textContent = remaining ? `⚠️ ${remaining} pending` : '✅ All synced';
+      document.getElementById('last-sync').textContent = `Last sync: ${new Date().toLocaleTimeString()}`;
+      updatePendingIndicator();
+      if (failed) setTimeout(syncPendingReports, 5000);
+    }
+
     async function updatePendingIndicator() {
       const count = await db.pending.count();
       const el = document.getElementById('pendingQueueIndicator');
@@ -1525,13 +1512,14 @@ document.getElementById('photo').addEventListener('change', function(e) {
     // ---------- SUPABASE INIT ----------
     async function initSupabase() {
       try {
-    state.supabase = window.supabase.createClient(
-      'https://prwfzkbrtxvoyamgdcem.supabase.co',           // Your new Project URL
-      'sb_publishable_RXSq-kezZRkFz8TVoJl3lw_nbEarg46'     // Your new Anon Key
-    ); 
+        state.supabase = window.supabase.createClient(
+          'https://prwfzkbrtxvoyamgdcem.supabase.co',
+          'sb_publishable_RXSq-kezZRkFz8TVoJl3lw_nbEarg46'
+        );
         const { error } = await state.supabase.auth.signInAnonymously();
         if (error) throw error;
         state.supabaseReady = true;
+        console.log('✅ Supabase ready');
       } catch (e) {
         console.warn('Supabase init failed, local-only mode', e);
         state.supabaseReady = false;
@@ -1574,7 +1562,6 @@ document.getElementById('photo').addEventListener('change', function(e) {
       osm.addTo(map);
       L.control.layers(baseLayers).addTo(map);
 
-      // Click to set pin
       map.on('click', (e) => {
         state.location = { lat: e.latlng.lat, lng: e.latlng.lng };
         if (marker) map.removeLayer(marker);
@@ -1585,7 +1572,6 @@ document.getElementById('photo').addEventListener('change', function(e) {
         localStorage.setItem('cathedral-manual-pin', JSON.stringify(state.location));
       });
 
-      // Restore saved pin
       const saved = localStorage.getItem('cathedral-manual-pin');
       if (saved) {
         try {
@@ -1624,7 +1610,6 @@ document.getElementById('photo').addEventListener('change', function(e) {
         m.on('click', () => openSatelliteModal(r.id));
         reportMarkers.push(m);
       });
-      // Heatmap
       if (state.heatmapEnabled) {
         if (state.heatmapLayer) map.removeLayer(state.heatmapLayer);
         const heatData = state.reports.filter(r => r.lat && r.lng && !r.duplicate)
@@ -1670,7 +1655,6 @@ document.getElementById('photo').addEventListener('change', function(e) {
         card.dataset.id = r.id;
         const content = document.createElement('div');
         content.className = 'report-card-content';
-        // Badge
         const badgeSpan = document.createElement('span');
         badgeSpan.className = `badge badge-${r.damage}`;
         badgeSpan.textContent = t(`damage_${r.damage}`) || r.damage;
@@ -1980,6 +1964,69 @@ document.getElementById('photo').addEventListener('change', function(e) {
         document.getElementById('live-status').textContent = 'Could not confidently suggest infrastructure.';
       }
     }
+
+    // ---------- DIRECT CAMERA CAPTURE (getUserMedia) ----------
+    let cameraStream = null;
+    const cameraModal = document.getElementById('cameraModal');
+    const cameraFeed = document.getElementById('cameraFeed');
+    const captureBtn = document.getElementById('capturePhoto');
+    const closeCamera = document.getElementById('closeCamera');
+    const cameraBtn = document.getElementById('cameraBtn');
+
+    // Open camera
+    cameraBtn.addEventListener('click', async function() {
+      try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+        });
+        cameraFeed.srcObject = cameraStream;
+        cameraModal.style.display = 'flex';
+      } catch (err) {
+        alert('Camera access denied. Please use the file picker instead.');
+        console.error(err);
+      }
+    });
+
+    // Capture photo
+    captureBtn.addEventListener('click', function() {
+      const canvas = document.createElement('canvas');
+      const video = cameraFeed;
+      canvas.width = video.videoWidth || 1280;
+      canvas.height = video.videoHeight || 720;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(function(blob) {
+        const file = new File([blob], 'camera-photo.jpg', { type: 'image/jpeg' });
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        document.getElementById('photo').files = dt.files;
+        document.getElementById('photo').dispatchEvent(new Event('change'));
+        document.getElementById('photoStatus').textContent = '📸 ' + file.name;
+        document.getElementById('photoStatus').style.color = '#27ae60';
+        closeCameraModal();
+      }, 'image/jpeg', 0.9);
+    });
+
+    function closeCameraModal() {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+      }
+      cameraFeed.srcObject = null;
+      cameraModal.style.display = 'none';
+    }
+
+    closeCamera.addEventListener('click', closeCameraModal);
+
+    document.getElementById('photo').addEventListener('change', function(e) {
+      if (this.files && this.files.length > 0) {
+        document.getElementById('photoStatus').textContent = '📸 ' + this.files[0].name;
+        document.getElementById('photoStatus').style.color = '#27ae60';
+      } else {
+        document.getElementById('photoStatus').textContent = 'No photo selected';
+        document.getElementById('photoStatus').style.color = '#888';
+      }
+    });
 
     // ---------- FORM SUBMIT ----------
     async function submitReportHandler() {
@@ -2416,71 +2463,6 @@ document.getElementById('photo').addEventListener('change', function(e) {
       state.isOnline = false;
     });
 
-// ---------- DIRECT CAMERA CAPTURE (getUserMedia) ----------
-let cameraStream = null;
-const cameraModal = document.getElementById('cameraModal');
-const cameraFeed = document.getElementById('cameraFeed');
-const captureBtn = document.getElementById('capturePhoto');
-const closeCamera = document.getElementById('closeCamera');
-const cameraBtn = document.getElementById('cameraBtn');
-
-// Open camera
-cameraBtn.addEventListener('click', async function() {
-  try {
-    cameraStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
-    });
-    cameraFeed.srcObject = cameraStream;
-    cameraModal.style.display = 'flex';
-  } catch (err) {
-    alert('Camera access denied. Please use the file picker instead.');
-    console.error(err);
-  }
-});
-
-// Capture photo
-captureBtn.addEventListener('click', function() {
-  const canvas = document.createElement('canvas');
-  const video = cameraFeed;
-  canvas.width = video.videoWidth || 1280;
-  canvas.height = video.videoHeight || 720;
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-  canvas.toBlob(function(blob) {
-    const file = new File([blob], 'camera-photo.jpg', { type: 'image/jpeg' });
-    const dt = new DataTransfer();
-    dt.items.add(file);
-    document.getElementById('photo').files = dt.files;
-    document.getElementById('photo').dispatchEvent(new Event('change'));
-    document.getElementById('photoStatus').textContent = '📸 ' + file.name;
-    document.getElementById('photoStatus').style.color = '#27ae60';
-    closeCameraModal();
-  }, 'image/jpeg', 0.9);
-});
-
-// Close camera
-function closeCameraModal() {
-  if (cameraStream) {
-    cameraStream.getTracks().forEach(track => track.stop());
-    cameraStream = null;
-  }
-  cameraFeed.srcObject = null;
-  cameraModal.style.display = 'none';
-}
-
-closeCamera.addEventListener('click', closeCameraModal);
-
-// Track file input change (for file picker)
-document.getElementById('photo').addEventListener('change', function(e) {
-  if (this.files && this.files.length > 0) {
-    document.getElementById('photoStatus').textContent = '📸 ' + this.files[0].name;
-    document.getElementById('photoStatus').style.color = '#27ae60';
-  } else {
-    document.getElementById('photoStatus').textContent = 'No photo selected';
-    document.getElementById('photoStatus').style.color = '#888';
-  }
-});
     // ---------- INIT ----------
     async function init() {
       await migrateLocalStorage();
