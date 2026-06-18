@@ -385,7 +385,13 @@
     <!-- DAMAGE REPORT FORM -->
     <h2 id="submit-heading">Submit a Damage Report</h2>
     <div style="background: white; border-radius: var(--card-radius); padding: 1.2rem; box-shadow: var(--shadow-sm); margin-bottom: 1rem;">
-      <p><span class="step-badge">1</span> <label id="photo-label"></label><br><input type="file" id="photo" accept="image/*" capture="environment" aria-describedby="photo-help"></p>
+      <p><span class="step-badge">1</span> <label id="photo-label"></label> <br>
+    <!-- Photo Input with Fallback -->
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+      <input type="file" id="photo" accept="image/*" aria-describedby="photo-help" style="flex:1; min-width:120px;">
+      <button type="button" id="cameraBtn" class="btn" style="padding: 0.5rem 1rem;">📸 Camera</button>
+      <span id="photoStatus" style="font-size:0.8rem; color:#888;">No photo selected</span>
+    </div>
       <div class="ai-toggle"><a href="#" id="ai-toggle-link" style="color: #5e2d8e; text-decoration: none;">📡 Analyze with AI (requires ~100 MB download, Wi‑Fi recommended) ▸</a></div>
       <div class="ai-panel" id="ai-panel">
         <strong id="ai-title"></strong><br>
@@ -2362,6 +2368,46 @@
       document.getElementById('offlineBanner').style.display = 'block';
       state.isOnline = false;
     });
+
+// ---------- CAMERA WITH FALLBACK ----------
+document.getElementById('cameraBtn').addEventListener('click', function() {
+  // Try to open camera directly
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.capture = 'environment';
+  input.style.display = 'none';
+  document.body.appendChild(input);
+  
+  input.addEventListener('change', function(e) {
+    if (e.target.files && e.target.files.length > 0) {
+      // Success – copy to the main input
+      const dt = new DataTransfer();
+      dt.items.add(e.target.files[0]);
+      document.getElementById('photo').files = dt.files;
+      document.getElementById('photo').dispatchEvent(new Event('change'));
+      document.getElementById('photoStatus').textContent = '📸 Photo taken!';
+      document.getElementById('photoStatus').style.color = '#27ae60';
+    } else {
+      // Fallback – open file picker
+      document.getElementById('photo').click();
+    }
+    document.body.removeChild(input);
+  });
+  
+  input.click();
+});
+
+// Track photo selection
+document.getElementById('photo').addEventListener('change', function(e) {
+  if (this.files && this.files.length > 0) {
+    document.getElementById('photoStatus').textContent = '📸 ' + this.files[0].name;
+    document.getElementById('photoStatus').style.color = '#27ae60';
+  } else {
+    document.getElementById('photoStatus').textContent = 'No photo selected';
+    document.getElementById('photoStatus').style.color = '#888';
+  }
+});
 
     // ---------- INIT ----------
     async function init() {
