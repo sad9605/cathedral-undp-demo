@@ -8,12 +8,14 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
+    /* ----- GLOBAL STYLES ----- */
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: system-ui, -apple-system, sans-serif;
       background: #f0f2f5;
-      padding: 1.5rem;
       color: #1a1a1a;
+      line-height: 1.5;
+      transition: background 0.2s, color 0.2s;
     }
     body.dark {
       background: #1a1a2e;
@@ -25,22 +27,127 @@
       background: #2a2a3e;
       border-color: #444;
     }
+    body.dark .stat-card .stat-label,
+    body.dark .chart-box h3,
+    body.dark .table-container h3 {
+      color: #ccc;
+    }
     body.dark table td {
       border-bottom-color: #444;
     }
     body.dark .status-text.online { color: #2ecc71; }
     body.dark .status-text.offline { color: #e74c3c; }
-    .container { max-width: 1400px; margin: 0 auto; }
-    h1 {
-      font-size: 2rem;
-      margin-bottom: 0.5rem;
+    body.dark .subtitle { color: #aaa; }
+
+    /* ----- CATHEDRAL BANNER (matches demo) ----- */
+    .cathedral-banner {
+      background: #b39ddb;
+      padding: 1.5rem 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+      margin-bottom: 1.5rem;
+    }
+    .banner-content {
+      max-width: 1400px;
+      margin: 0 auto;
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 1.5rem;
       flex-wrap: wrap;
     }
-    .subtitle { color: #666; font-weight: normal; font-size: 1rem; }
-    body.dark .subtitle { color: #aaa; }
+    .logo-mark svg {
+      display: block;
+    }
+    .wordmark h1 {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-weight: 300;
+      font-size: 1.6rem;
+      letter-spacing: 0.1em;
+      color: white;
+      margin: 0;
+    }
+    .tagline {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.8);
+      margin: 0;
+    }
+
+    /* ----- UNDP BRANDING (matches demo) ----- */
+    .undp-branding {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin: 0 0 1rem 0;
+      background: #f0f5ff;
+      padding: 0.75rem 1.25rem;
+      border-radius: 60px;
+      border: 1px solid #004c9e;
+    }
+    body.dark .undp-branding {
+      background: #1e2a3a;
+      border-color: #2a4a7a;
+    }
+    .undp-branding-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .undp-branding-inner a {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+    }
+    .undp-branding-inner img {
+      height: 32px;
+    }
+    .undp-branding-inner .brand-text {
+      font-weight: 600;
+      color: #004c9e;
+    }
+    body.dark .undp-branding-inner .brand-text {
+      color: #5a8ec9;
+    }
+    .undp-branding-inner .badge-text {
+      font-size: 0.85rem;
+      color: #2c3e66;
+    }
+    body.dark .undp-branding-inner .badge-text {
+      color: #8aacd0;
+    }
+    .undp-quote {
+      font-size: 0.85rem;
+      font-style: italic;
+      border-left: 3px solid #004c9e;
+      padding-left: 0.75rem;
+      color: #1e466e;
+    }
+    body.dark .undp-quote {
+      color: #8aacd0;
+      border-left-color: #3a6a9e;
+    }
+
+    /* ----- DASHBOARD LAYOUT ----- */
+    .container { max-width: 1400px; margin: 0 auto; padding: 0 1.5rem 2rem; }
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    .dashboard-header h1 {
+      font-size: 1.6rem;
+      margin: 0;
+    }
+    .dashboard-header .subtitle {
+      color: #666;
+      font-weight: normal;
+      font-size: 1rem;
+    }
+    body.dark .dashboard-header .subtitle { color: #aaa; }
+
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -54,7 +161,7 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.06);
       border: 1px solid #e8eaed;
     }
-    body.dark .stat-card { border-color: #444; }
+    body.dark .stat-card { border-color: #444; background: #2a2a3e; }
     .stat-number {
       font-size: 2.2rem;
       font-weight: 700;
@@ -85,7 +192,7 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.06);
       border: 1px solid #e8eaed;
     }
-    body.dark .chart-box { border-color: #444; }
+    body.dark .chart-box { border-color: #444; background: #2a2a3e; }
     .chart-box h3 {
       font-size: 0.9rem;
       color: #444;
@@ -109,7 +216,7 @@
       margin-top: 1.5rem;
       overflow-x: auto;
     }
-    body.dark .table-container { border-color: #444; }
+    body.dark .table-container { border-color: #444; background: #2a2a3e; }
     .table-container h3 {
       font-size: 0.9rem;
       color: #444;
@@ -167,6 +274,10 @@
       transition: background 0.2s;
     }
     .refresh-btn:hover { background: #6b3fc0; }
+    .refresh-btn.secondary {
+      background: #2c3e66;
+    }
+    .refresh-btn.secondary:hover { background: #1a2a4a; }
     .status-bar {
       display: flex;
       justify-content: space-between;
@@ -214,26 +325,70 @@
     }
     @media (max-width: 768px) {
       .chart-grid { grid-template-columns: 1fr; }
-      body { padding: 0.75rem; }
+      body { padding: 0; }
+      .container { padding: 0 0.75rem 1.5rem; }
       .stat-card { padding: 0.75rem; }
       .stat-number { font-size: 1.6rem; }
       #map { height: 250px; }
       .dark-toggle { bottom: 0.5rem; right: 0.5rem; width: 40px; height: 40px; font-size: 1rem; }
+      .banner-content { flex-direction: column; text-align: center; }
+      .undp-branding-inner { flex-direction: column; text-align: center; }
     }
+    body[dir="rtl"] .undp-quote { border-left: none; border-right: 3px solid #004c9e; padding-left: 0; padding-right: 0.75rem; }
   </style>
 </head>
 <body>
-<div class="container">
-  <h1>
-    <span>🏛️ Cathedral Network</span>
-    <span class="subtitle">— Admin Dashboard</span>
-  </h1>
 
+<!-- CATHEDRAL BANNER (matches demo) -->
+<header class="cathedral-banner">
+  <div class="banner-content">
+    <div class="logo-mark">
+      <svg viewBox="0 0 120 140" width="50" height="60" aria-label="Cathedral Network logo">
+        <path d="M60 130 L55 20 L60 5 L65 20 Z" fill="white"/>
+        <circle cx="60" cy="25" r="2" fill="white"/><circle cx="55" cy="40" r="2" fill="white"/><circle cx="65" cy="40" r="2" fill="white"/>
+        <circle cx="50" cy="55" r="2" fill="white"/><circle cx="60" cy="55" r="2" fill="white"/><circle cx="70" cy="55" r="2" fill="white"/>
+        <circle cx="45" cy="70" r="2" fill="white"/><circle cx="55" cy="70" r="2" fill="white"/><circle cx="65" cy="70" r="2" fill="white"/><circle cx="75" cy="70" r="2" fill="white"/>
+        <circle cx="50" cy="85" r="2" fill="white"/><circle cx="60" cy="85" r="2" fill="white"/><circle cx="70" cy="85" r="2" fill="white"/>
+        <circle cx="55" cy="100" r="2" fill="white"/><circle cx="65" cy="100" r="2" fill="white"/>
+        <path d="M60 25 L55 40 M60 25 L65 40 M55 40 L50 55 M65 40 L70 55" stroke="white" stroke-width="0.5" fill="none" opacity="0.6"/>
+        <path d="M30 60 A30 30 0 1 1 90 60" stroke="white" stroke-width="2" fill="none"/>
+      </svg>
+    </div>
+    <div class="wordmark">
+      <h1>CATHEDRAL NETWORK</h1>
+      <p class="tagline">A cathedral that watches</p>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- UNDP BRANDING (matches demo) -->
+  <div class="undp-branding">
+    <div class="undp-branding-inner">
+      <a href="https://www.undp.org" target="_blank" rel="noopener noreferrer">
+        <img src="https://www.undp.org/sites/g/files/zskgke326/files/2025-04/undp-logo-blue.4f32e17f.svg" alt="UNDP logo">
+        <span class="brand-text">Crisis Mapping Challenge</span>
+      </a>
+      <span class="badge-text">Demonstration · Cathedral Network Spotter</span>
+    </div>
+    <div class="undp-quote">
+      “In the initial hours after a crisis, responders are often working with incomplete information… By enabling people to report crisis damage directly from their communities, we can combine local knowledge with satellite analysis to create a faster, clearer picture.”
+      <strong>— Anila Qehaja, UNDP Crisis Bureau</strong>
+    </div>
+  </div>
+
+  <!-- DASHBOARD HEADER -->
+  <div class="dashboard-header">
+    <h1>📊 Admin Dashboard <span class="subtitle">— All Reports</span></h1>
+  </div>
+
+  <!-- STATUS BAR -->
   <div class="status-bar">
     <span class="status-text" id="connectionStatus">🔄 Connecting...</span>
     <div>
       <button class="refresh-btn" onclick="loadData()">🔄 Refresh Data</button>
-      <button class="refresh-btn" onclick="window.location.href='index.html'" style="background:#2c3e66;">📱 Open App</button>
+      <button class="refresh-btn secondary" onclick="window.location.href='index.html'">📱 Open App</button>
     </div>
   </div>
 
@@ -268,6 +423,7 @@
       <div class="loading"><div class="spinner"></div> Loading reports...</div>
     </div>
   </div>
+
 </div>
 
 <button class="dark-toggle" id="darkToggle" aria-label="Toggle dark mode">🌙</button>
@@ -484,33 +640,36 @@
   function renderMap() {
     const mapContainer = document.getElementById('map');
     if (map) { map.remove(); map = null; }
+
     map = L.map(mapContainer).setView([20, 0], 2);
 
-// Define tile layers
-const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{y}/{x}.png', {
-  attribution: '© OpenStreetMap',
-  maxZoom: 19
-});
+    // Define tile layers
+    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{y}/{x}.png', {
+      attribution: '© OpenStreetMap',
+      maxZoom: 19
+    });
 
-const esriSat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-  attribution: 'Esri, Maxar, Earthstar Geographics',
-  maxZoom: 18
-});
+    const esriSat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Esri, Maxar, Earthstar Geographics',
+      maxZoom: 18
+    });
 
-const carto = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-  attribution: '© CartoDB',
-  maxZoom: 19
-});
+    const carto = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '© CartoDB',
+      maxZoom: 19
+    });
 
-// Set default layer (OSM)
-osm.addTo(map);
+    // Default layer
+    osm.addTo(map);
 
-// Add layer control
-L.control.layers({
-  'OpenStreetMap': osm,
-  'Satellite (Esri)': esriSat,
-  'Light Map (Carto)': carto
-}).addTo(map);
+    // Layer control
+    L.control.layers({
+      'OpenStreetMap': osm,
+      'Satellite (Esri)': esriSat,
+      'Light Map (Carto)': carto
+    }).addTo(map);
+
+    // Add markers
     const latest = getLatestReports();
     latest.forEach(r => {
       const lat = r.lat || r.latitude;
