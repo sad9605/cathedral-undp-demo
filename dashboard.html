@@ -38,6 +38,7 @@
     body.dark .status-text.online { color: #2ecc71; }
     body.dark .status-text.offline { color: #e74c3c; }
     body.dark .subtitle { color: #aaa; }
+    body.dark .footer { color: #888; border-top-color: #444; }
 
     /* ----- CATHEDRAL BANNER (matches demo) ----- */
     .cathedral-banner {
@@ -323,6 +324,34 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.2);
       z-index: 1000;
     }
+
+    /* ----- FOOTER (matches demo) ----- */
+    .footer {
+      margin-top: 3rem;
+      font-style: italic;
+      color: #888;
+      border-top: 1px solid #ddd;
+      padding-top: 1rem;
+      text-align: center;
+    }
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .footer-links a {
+      color: #5e2d8e;
+      text-decoration: none;
+    }
+    body.dark .footer-links a {
+      color: #b39ddb;
+    }
+    .footer strong {
+      font-weight: 700;
+    }
+
     @media (max-width: 768px) {
       .chart-grid { grid-template-columns: 1fr; }
       body { padding: 0; }
@@ -422,6 +451,17 @@
     <div id="tableWrapper">
       <div class="loading"><div class="spinner"></div> Loading reports...</div>
     </div>
+  </div>
+
+  <!-- FOOTER (matches demo) -->
+  <div class="footer">
+    <div class="footer-links">
+      <a href="https://github.com/sad9605/cathedral-network" target="_blank">🔗 GitHub Repo</a>
+      <a href="#" id="sharePageBtn">📢 Share this tool</a>
+      <a href="mailto:cathedral.network@proton.me">✉️ Proton Mail</a>
+      <a href="https://signal.me/#p/@cathedral.network" target="_blank">📱 Signal</a>
+    </div>
+    <strong>Always and Forever, Coco. Always and Forever.</strong>
   </div>
 
 </div>
