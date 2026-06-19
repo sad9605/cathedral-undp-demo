@@ -485,11 +485,32 @@
     const mapContainer = document.getElementById('map');
     if (map) { map.remove(); map = null; }
     map = L.map(mapContainer).setView([20, 0], 2);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{y}/{x}.png', {
-      attribution: '© OpenStreetMap',
-      maxZoom: 19
-    }).addTo(map);
 
+// Define tile layers
+const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{y}/{x}.png', {
+  attribution: '© OpenStreetMap',
+  maxZoom: 19
+});
+
+const esriSat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+  attribution: 'Esri, Maxar, Earthstar Geographics',
+  maxZoom: 18
+});
+
+const carto = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© CartoDB',
+  maxZoom: 19
+});
+
+// Set default layer (OSM)
+osm.addTo(map);
+
+// Add layer control
+L.control.layers({
+  'OpenStreetMap': osm,
+  'Satellite (Esri)': esriSat,
+  'Light Map (Carto)': carto
+}).addTo(map);
     const latest = getLatestReports();
     latest.forEach(r => {
       const lat = r.lat || r.latitude;
