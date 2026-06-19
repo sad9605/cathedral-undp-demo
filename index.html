@@ -506,6 +506,11 @@
       <p><span class="step-badge">4</span> <label id="desc-label"></label><br>
         <textarea id="description" rows="3" placeholder="Describe what you see..."></textarea>
       </p>
+      <div style="margin-top:0.5rem; display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+         <input type="text" id="what3wordsInput" placeholder="Enter what3words address (e.g. filled.count.soap)" style="flex:2; min-width:200px; padding:0.5rem; border:1px solid #ccc; border-radius:8px;">
+         <button id="what3wordsBtn" class="btn" style="padding:0.3rem 1rem;">🔍 Find Location</button>
+         <span id="what3wordsStatus" style="font-size:0.7rem; color:#888;"></span>
+      </div>
       <div class="warning" id="privacy-box"></div>
       <p><span class="step-badge">5</span> <label id="geo-label"></label><br>
         <span id="location-status">No location captured. Tap map to drop a pin, or</span>
@@ -2359,6 +2364,61 @@
       }
     });
 
+// ---------- WHAT3WORDS INTEGRATION ----------
+const what3wordsInput = document.getElementById('what3wordsInput');
+const what3wordsBtn = document.getElementById('what3wordsBtn');
+const what3wordsStatus = document.getElementById('what3wordsStatus');
+const w3wApiKey = '0I1PCJL0'; // Your API key
+
+what3wordsBtn.addEventListener('click', async function() {
+  const address = what3wordsInput.value.trim();
+  if (!address) {
+    what3wordsStatus.textContent = '⚠️ Please enter a what3words address';
+    what3wordsStatus.style.color = '#c0392b';
+    return;
+  }
+
+  const cleaned = address.replace(/^\/\/\//, '').trim();
+  what3wordsStatus.textContent = '⏳ Looking up location...';
+  what3wordsStatus.style.color = '#888';
+
+  try {
+    const url = `https://api.what3words.com/v3/convert-to-coordinates?words=${encodeURIComponent(cleaned)}&key=${w3wApiKey}`;
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.error) {
+      what3wordsStatus.textContent = '❌ ' + data.error.message;
+      what3wordsStatus.style.color = '#c0392b';
+      return;
+    }
+
+    const lat = data.coordinates.lat;
+    const lng = data.coordinates.lng;
+
+    state.location = { lat, lng };
+    if (marker) map.removeLayer(marker);
+    marker = L.marker([lat, lng]).addTo(map)
+      .bindPopup(`📍 ${lat.toFixed(4)}, ${lng.toFixed(4)}<br>📍 ${cleaned}`)
+      .openPopup();
+    map.setView([lat, lng], 16);
+    locationStatus.textContent = `📍 ${lat.toFixed(4)}, ${lng.toFixed(4)} (what3words: ${cleaned})`;
+    localStorage.setItem('cathedral-manual-pin', JSON.stringify({ lat, lng }));
+
+    what3wordsStatus.textContent = '✅ Location found! Pin placed.';
+    what3wordsStatus.style.color = '#27ae60';
+
+  } catch (err) {
+    what3wordsStatus.textContent = '❌ Error: ' + err.message;
+    what3wordsStatus.style.color = '#c0392b';
+  }
+});
+
+what3wordsInput.addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    what3wordsBtn.click();
+  }
+});
     document.getElementById('get-location').addEventListener('click', () => {
       if (!navigator.geolocation) return alert('Geolocation not supported');
       navigator.geolocation.getCurrentPosition((pos) => {
