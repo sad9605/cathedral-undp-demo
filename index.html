@@ -307,7 +307,81 @@
       .dark-mode-toggle { bottom: 0.5rem; right: 0.5rem; width: 40px; height: 40px; }
     }
     body[dir="rtl"] .step-badge { margin-right: 0; margin-left: 0.5rem; }
-    /* Camera Modal */
+
+    /* ----- MOBILE POLISH ----- */
+    @media (max-width: 600px) {
+      /* Touch targets */
+      button, .btn, input[type="file"], #cameraBtn {
+        min-height: 48px;
+        padding: 0.7rem 1rem;
+        font-size: 1rem;
+        border-radius: 30px;
+      }
+      /* Checkboxes */
+      input[type="checkbox"] {
+        width: 22px;
+        height: 22px;
+        transform: scale(1.2);
+        margin-right: 8px;
+      }
+      /* Form elements */
+      input, select, textarea {
+        font-size: 16px !important;
+        width: 100%;
+        max-width: 100%;
+        padding: 0.7rem;
+      }
+      /* Step badges */
+      .step-badge {
+        width: 32px;
+        height: 32px;
+        line-height: 32px;
+        font-size: 0.9rem;
+      }
+      /* Spacing */
+      .container > div[style*="background: white"] {
+        padding: 0.75rem !important;
+      }
+      /* Map */
+      #map {
+        height: 300px;
+      }
+      /* Camera modal */
+      #cameraModal .btn {
+        min-height: 56px;
+        min-width: 120px;
+        font-size: 1.1rem;
+      }
+      #cameraModal video {
+        max-height: 60vh;
+        border-radius: 12px;
+      }
+      /* Status text */
+      #location-status, #photoStatus, #what3wordsStatus {
+        font-size: 0.85rem;
+      }
+      /* What3words input */
+      #what3wordsInput {
+        font-size: 16px !important;
+        padding: 0.7rem;
+      }
+      /* Report cards */
+      .report-card-content {
+        padding: 0.75rem;
+      }
+      .report-card-content p, .report-card-content small {
+        font-size: 0.9rem;
+      }
+      /* Leaderboard & impact */
+      .impact-stat {
+        font-size: 1.4rem;
+      }
+      .leaderboard ol {
+        font-size: 0.9rem;
+      }
+    }
+
+    /* ----- CAMERA MODAL ----- */
     #cameraModal {
       display: none;
       position: fixed;
@@ -506,17 +580,18 @@
       <p><span class="step-badge">4</span> <label id="desc-label"></label><br>
         <textarea id="description" rows="3" placeholder="Describe what you see..."></textarea>
       </p>
-      <div style="margin-top:0.5rem; display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
-         <input type="text" id="what3wordsInput" placeholder="Enter what3words address (e.g. filled.count.soap)" style="flex:2; min-width:200px; padding:0.5rem; border:1px solid #ccc; border-radius:8px;">
-         <button id="what3wordsBtn" class="btn" style="padding:0.3rem 1rem;">🔍 Find Location</button>
-         <span id="what3wordsStatus" style="font-size:0.7rem; color:#888;"></span>
-      </div>
       <div class="warning" id="privacy-box"></div>
       <p><span class="step-badge">5</span> <label id="geo-label"></label><br>
         <span id="location-status">No location captured. Tap map to drop a pin, or</span>
         <button id="get-location" style="margin-left:0.5rem;">📍 Share My Location</button>
         <button id="clear-map-btn" style="margin-left:0.5rem;">🗑️ Clear map pin</button>
       </p>
+      <!-- what3words -->
+      <div style="margin-top:0.5rem; display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+        <input type="text" id="what3wordsInput" placeholder="Enter what3words address (e.g. filled.count.soap)" style="flex:2; min-width:200px; padding:0.5rem; border:1px solid #ccc; border-radius:8px;">
+        <button id="what3wordsBtn" class="btn" style="padding:0.3rem 1rem;">🔍 Find Location</button>
+        <span id="what3wordsStatus" style="font-size:0.7rem; color:#888;"></span>
+      </div>
       <div id="form-error" class="error-message" role="alert"></div>
       <button id="submit-report" class="btn">Submit Report</button>
       <div style="margin:1rem 0; display:flex; gap:1rem; align-items: center; flex-wrap: wrap;">
@@ -612,7 +687,7 @@
 
     // ---------- I18N (complete, 10 languages) ----------
     const i18n = {
-      en: {
+        en: {
         how_it_works: "How it works:", step1: "Take a photo", step2: "Select damage level", step3: "Infrastructure & crisis info", step4: "Describe", step5: "Add location",
         offline_note: "Works offline.", submit_report_heading: "Submit a Damage Report", photo_label: "Photo of damage:",
         ai_toggle: "Analyze with AI (requires ~100 MB download, Wi‑Fi recommended) ▸", ai_analysis: "AI Analysis (optional):",
@@ -2033,6 +2108,62 @@
       }
     });
 
+    // ---------- WHAT3WORDS INTEGRATION ----------
+    const what3wordsInput = document.getElementById('what3wordsInput');
+    const what3wordsBtn = document.getElementById('what3wordsBtn');
+    const what3wordsStatus = document.getElementById('what3wordsStatus');
+    const w3wApiKey = '0I1PCJL0'; // Your API key
+
+    what3wordsBtn.addEventListener('click', async function() {
+      const address = what3wordsInput.value.trim();
+      if (!address) {
+        what3wordsStatus.textContent = '⚠️ Please enter a what3words address';
+        what3wordsStatus.style.color = '#c0392b';
+        return;
+      }
+
+      const cleaned = address.replace(/^\/\/\//, '').trim();
+      what3wordsStatus.textContent = '⏳ Looking up location...';
+      what3wordsStatus.style.color = '#888';
+
+      try {
+        const url = `https://api.what3words.com/v3/convert-to-coordinates?words=${encodeURIComponent(cleaned)}&key=${w3wApiKey}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.error) {
+          what3wordsStatus.textContent = '❌ ' + data.error.message;
+          what3wordsStatus.style.color = '#c0392b';
+          return;
+        }
+
+        const lat = data.coordinates.lat;
+        const lng = data.coordinates.lng;
+
+        state.location = { lat, lng };
+        if (marker) map.removeLayer(marker);
+        marker = L.marker([lat, lng]).addTo(map)
+          .bindPopup(`📍 ${lat.toFixed(4)}, ${lng.toFixed(4)}<br>📍 ${cleaned}`)
+          .openPopup();
+        map.setView([lat, lng], 16);
+        locationStatus.textContent = `📍 ${lat.toFixed(4)}, ${lng.toFixed(4)} (what3words: ${cleaned})`;
+        localStorage.setItem('cathedral-manual-pin', JSON.stringify({ lat, lng }));
+
+        what3wordsStatus.textContent = '✅ Location found! Pin placed.';
+        what3wordsStatus.style.color = '#27ae60';
+
+      } catch (err) {
+        what3wordsStatus.textContent = '❌ Error: ' + err.message;
+        what3wordsStatus.style.color = '#c0392b';
+      }
+    });
+
+    what3wordsInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        what3wordsBtn.click();
+      }
+    });
+
     // ---------- FORM SUBMIT ----------
     async function submitReportHandler() {
       const infraChecked = document.querySelectorAll('#infra-list input[type="checkbox"]:checked').length;
@@ -2364,61 +2495,6 @@
       }
     });
 
-// ---------- WHAT3WORDS INTEGRATION ----------
-const what3wordsInput = document.getElementById('what3wordsInput');
-const what3wordsBtn = document.getElementById('what3wordsBtn');
-const what3wordsStatus = document.getElementById('what3wordsStatus');
-const w3wApiKey = '0I1PCJL0'; // Your API key
-
-what3wordsBtn.addEventListener('click', async function() {
-  const address = what3wordsInput.value.trim();
-  if (!address) {
-    what3wordsStatus.textContent = '⚠️ Please enter a what3words address';
-    what3wordsStatus.style.color = '#c0392b';
-    return;
-  }
-
-  const cleaned = address.replace(/^\/\/\//, '').trim();
-  what3wordsStatus.textContent = '⏳ Looking up location...';
-  what3wordsStatus.style.color = '#888';
-
-  try {
-    const url = `https://api.what3words.com/v3/convert-to-coordinates?words=${encodeURIComponent(cleaned)}&key=${w3wApiKey}`;
-    const response = await fetch(url);
-    const data = await response.json();
-
-    if (data.error) {
-      what3wordsStatus.textContent = '❌ ' + data.error.message;
-      what3wordsStatus.style.color = '#c0392b';
-      return;
-    }
-
-    const lat = data.coordinates.lat;
-    const lng = data.coordinates.lng;
-
-    state.location = { lat, lng };
-    if (marker) map.removeLayer(marker);
-    marker = L.marker([lat, lng]).addTo(map)
-      .bindPopup(`📍 ${lat.toFixed(4)}, ${lng.toFixed(4)}<br>📍 ${cleaned}`)
-      .openPopup();
-    map.setView([lat, lng], 16);
-    locationStatus.textContent = `📍 ${lat.toFixed(4)}, ${lng.toFixed(4)} (what3words: ${cleaned})`;
-    localStorage.setItem('cathedral-manual-pin', JSON.stringify({ lat, lng }));
-
-    what3wordsStatus.textContent = '✅ Location found! Pin placed.';
-    what3wordsStatus.style.color = '#27ae60';
-
-  } catch (err) {
-    what3wordsStatus.textContent = '❌ Error: ' + err.message;
-    what3wordsStatus.style.color = '#c0392b';
-  }
-});
-
-what3wordsInput.addEventListener('keypress', function(e) {
-  if (e.key === 'Enter') {
-    what3wordsBtn.click();
-  }
-});
     document.getElementById('get-location').addEventListener('click', () => {
       if (!navigator.geolocation) return alert('Geolocation not supported');
       navigator.geolocation.getCurrentPosition((pos) => {
