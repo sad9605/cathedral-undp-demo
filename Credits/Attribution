@@ -1,0 +1,7 @@
+The Cathedral Network UNDP Demo uses the following open‑source tools and services:
+
+- **Leaflet** – BSD‑2‑Clause. Copyright (c) 2010‑2024, Vladimir Agafonkin. [https://leafletjs.com/](https://leafletjs.com/)
+- **what3words API** – what3words terms. [https://what3words.com/](https://what3words.com/)
+- **CLIP** – MIT License. Copyright (c) OpenAI. [https://github.com/openai/CLIP](https://github.com/openai/CLIP)
+- **Supabase** – Apache‑2.0. Copyright (c) Supabase. [https://supabase.com/](https://supabase.com/)
+- **Esri Satellite Imagery** – Provided by Esri. [https://www.esri.com/](https://www.esri.com/)
